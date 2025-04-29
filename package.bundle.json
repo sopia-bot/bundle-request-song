@@ -1,0 +1,31 @@
+{
+  "name": "sopia-bundle-starter",
+  "name:ko": "소피아 번들 시작팩",
+  "description": "this is descript",
+	"description:ko": "이건 디스크립션입니다.",
+  "version": "0.0.1",
+  "main": "./apps/worker/index.js",
+  "page": "http://localhost:4200",
+  "pageType": "http",
+  "pageRoot": "apps/views",
+  "page-version": 2,
+  "debug": true,
+  "stp": {
+    "domain": "starter.sopia.dev",
+    "file": "./apps/background/index.js"
+  },
+  "release-note": {
+  },
+  "sopia": {
+    "ignore:upload": [
+      "node_modules",
+      "migrated"
+    ]
+  },
+  "dependencies": {
+    "@prisma/client": "^6.0.1",
+    "prisma": "^5.22.0",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  }
+}
