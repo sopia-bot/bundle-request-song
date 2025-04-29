@@ -9,14 +9,11 @@ module.exports = {
     path: resolve(__dirname, '../../dist/apps/worker'),
     filename: 'index.js',
     library: {
-      type: 'commonjs2', // CommonJS 형식
+      type: 'commonjs2',
     },
-    libraryExport: 'default', // default 내보내기 활성화
   },
-  watch: true, // 파일 감시 활성화
-  watchOptions: {
-    ignored: /node_modules/,
-    aggregateTimeout: 300,
+  experiments: {
+    outputModule: false
   },
   module: {
     rules: [
@@ -29,6 +26,14 @@ module.exports = {
                 parser: {
                   syntax: 'typescript',
                 },
+                transform: {
+                  legacyDecorator: true,
+                  decoratorMetadata: true
+                },
+                minify: {
+                  compress: false,
+                  mangle: false
+                }
               },
             },
             type: 'javascript/auto',
@@ -36,7 +41,7 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   externals: [
     // 모든 node_modules를 외부화
@@ -50,4 +55,5 @@ module.exports = {
   ],
   mode: 'development', // 'production', 또는 'development'
   target: 'node',
+  devtool: 'source-map',
 };

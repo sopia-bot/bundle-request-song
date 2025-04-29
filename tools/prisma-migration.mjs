@@ -12,6 +12,9 @@ const migrationsPath = path.join(prismaPath, 'migrations');
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 const schemaBackupPath = path.join(prismaPath, 'schema-backup');
 
+if ( !fs.existsSync(schemaBackupPath) ) {
+    fs.mkdirSync(schemaBackupPath);
+}
 if ( !fs.existsSync(migrationsPath) ) {
     fs.mkdirSync(migrationsPath);
 }
@@ -102,7 +105,7 @@ export async function prismaBuild() {
 
             await cp(
                 path.join(prismaPath, 'schema.prisma'),
-                path.join(prismaPath, 'schema-backup', `${dateSurffix(new Date())}_version_${pkg.version}.prisma`),
+                path.join(schemaBackupPath, `${dateSurffix(new Date())}_version_${pkg.version}.prisma`),
             );
         }
 

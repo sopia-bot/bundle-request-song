@@ -10,4 +10,4 @@ router.get('/', (req: Request, res: Response, next: NextFunction) => {
 
 app.use('/', router);
 
-module.exports = app;
+export default app;

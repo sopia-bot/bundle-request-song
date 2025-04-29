@@ -9,37 +9,54 @@ module.exports = {
     path: resolve(__dirname, '../../dist/apps/background'),
     filename: 'index.js',
     library: {
-      type: 'commonjs2', // CommonJS 형식
+      type: 'commonjs2',
+      export: 'default',
     },
-    libraryExport: 'default', // default 내보내기 활성화
-  },
-  watch: true, // 파일 감시 활성화
-  watchOptions: {
-    ignored: /node_modules/,
-    aggregateTimeout: 300,
-  },
-  resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   module: {
     rules: [
-        {
-            test: /\.ts$/,
-            exclude: [/node_modules/],
-            loader: 'builtin:swc-loader',
-            options: {
-              jsc: {
-                parser: {
-                  syntax: 'typescript',
-                },
-              },
+      {
+        test: /\.ts$/,
+        exclude: [/node_modules/],
+        loader: 'builtin:swc-loader',
+        options: {
+          jsc: {
+            target: 'es5',
+            parser: {
+              syntax: 'typescript',
+              tsx: false,
+              decorators: true,
+              dynamicImport: true,
             },
-            type: 'javascript/auto',
+            transform: {
+              legacyDecorator: true,
+              decoratorMetadata: true,
+            },
+            keepClassNames: true,
+            externalHelpers: true,
+            minify: {
+              compress: false,
+              mangle: false,
+            },
+          },
+          module: {
+            type: 'commonjs',
+          },
+          sourceMaps: true,
+          exclude: [
+            'jest.config.ts',
+            '.*\\.spec.tsx?$',
+            '.*\\.test.tsx?$',
+            './src/jest-setup.ts$',
+            './**/jest-setup.ts$',
+            '.*.js$',
+          ],
         },
+      },
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   externals: [
     // 모든 node_modules를 외부화
@@ -51,6 +68,6 @@ module.exports = {
       callback();
     },
   ],
-  mode: 'development', // 'production', 또는 'development'
+  mode: 'production', // 'production', 또는 'development'
   target: 'node',
 };

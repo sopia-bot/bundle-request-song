@@ -1,8 +1,8 @@
 {
-  "name": "sopia-bundle-starter",
+  "name": "official-request-song",
   "name:ko": "소피아 번들 시작팩",
   "description": "this is descript",
-	"description:ko": "이건 디스크립션입니다.",
+  "description:ko": "이건 디스크립션입니다.",
   "version": "0.0.1",
   "main": "./apps/worker/index.js",
   "page": "http://localhost:4200",
@@ -14,13 +14,9 @@
     "domain": "starter.sopia.dev",
     "file": "./apps/background/index.js"
   },
-  "release-note": {
-  },
+  "release-note": {},
   "sopia": {
-    "ignore:upload": [
-      "node_modules",
-      "migrated"
-    ]
+    "ignore:upload": ["node_modules", "migrated"]
   },
   "dependencies": {
     "@prisma/client": "^6.0.1",
