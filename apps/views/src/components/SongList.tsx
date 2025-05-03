@@ -73,12 +73,7 @@ export const SongList = ({
   return (
     <div className="mt-4">
       <h2 className="text-xl font-bold mb-4">신청곡 관리 목록</h2>
-      <Table
-        aria-label="신청곡 목록"
-        isStriped
-        isHeaderSticky
-        className="max-h-[450px]"
-      >
+      <Table aria-label="신청곡 목록" isHeaderSticky className="max-h-[450px]">
         <TableHeader columns={columns}>
           {(column) => (
             <TableColumn key={column.uid} allowsSorting>
