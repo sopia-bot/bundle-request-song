@@ -8,9 +8,19 @@ export type IconSvgProps = SVGProps<SVGSVGElement> & {
 export type DonationType = 'SPECIFIC_STICKER' | 'MINIMUM_STICKER';
 
 export type DonationSettings = {
-  type: DonationType;
+  // 무료 신청곡 설정
+  freeEnabled?: boolean;
+  limitCountEnabled?: boolean;
+  limitCount?: number;
+  limitTimeEnabled?: boolean;
+  limitTime?: number;
+
+  // 유료 신청곡 설정
+  paidEnabled?: boolean;
+  donationType?: DonationType;
   sticker?: Sticker;
   minimumAmount?: number;
+  distributionEnabled?: boolean;
 };
 
 export type Song = {

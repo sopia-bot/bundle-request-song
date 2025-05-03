@@ -76,8 +76,6 @@ function StickerDiv(props: StickerDivProps) {
     }
   };
 
-  console.log('checked', props.checked, props.sticker.name);
-
   return (
     <div
       className="relative w-full h-[130px] cursor-pointer"
@@ -115,12 +113,11 @@ type StickerDialogProp = {
 
 export function StickerDialog(props: StickerDialogProp) {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
   const { stickerList, isInit, setStickerList } = useStickerStore(
     (state) => state,
   );
   const [isOpen, setIsOpen] = useState(props.open);
-  const [tabKey, setTabKey] = useState<Key | null>(null);
+  const [tabKey, setTabKey] = useState<any | null>(null);
   const [selectedStickerKey, setSelectedStickerKey] = useState<string | null>(
     null,
   );
@@ -163,10 +160,6 @@ export function StickerDialog(props: StickerDialogProp) {
     setIsOpen(props.open);
   }, [props.open]);
 
-  useEffect(() => {
-    console.log('chKey', selectedStickerKey);
-  }, [selectedStickerKey]);
-
   const handleChange = (key: Key) => {
     setTabKey(key);
   };
@@ -201,10 +194,6 @@ export function StickerDialog(props: StickerDialogProp) {
     return <div></div>;
   }
 
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
-
   return (
     <Modal isOpen={isOpen} size="4xl" scrollBehavior="inside">
       <ModalContent>
@@ -212,7 +201,7 @@ export function StickerDialog(props: StickerDialogProp) {
         <ModalBody>
           <Tabs
             items={stickerList}
-            selectedKey={tabKey as Key}
+            selectedKey={tabKey}
             onSelectionChange={handleChange}
           >
             {stickerList.map((category) => (
@@ -263,6 +252,7 @@ export function StickerDialog(props: StickerDialogProp) {
 type StickerDialogBtnProps = {
   sticker?: string;
   onChange: (v: Sticker) => void;
+  disabled?: boolean;
 };
 
 export function findSticker(
@@ -317,6 +307,9 @@ export function StickerDialogBtn(props: StickerDialogBtnProps) {
   }, [props.sticker]);
 
   const handleOnClick = () => {
+    if (props.disabled) {
+      return;
+    }
     setOpened(true);
   };
 
@@ -332,14 +325,23 @@ export function StickerDialogBtn(props: StickerDialogBtnProps) {
     setOpened(false);
   };
 
-  const StickerButton = styled.div`
-    cursor: pointer;
-    max-width: 200px;
+  const StickerButton = styled.div<{ disabled?: boolean }>`
+    width: 230px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0px 20px;
     border-radius: 3px;
-
+    border: 1px solid rgba(0 0 0 / 0.23);
+    ${({ disabled }) =>
+      disabled
+        ? `
+        background-color: #dfdfdf;
+        cursor: default;
+      `
+        : `
+        cursor: pointer;
+    `}
     &:hover {
       background-color: #dfdfdf;
     }
@@ -351,13 +353,8 @@ export function StickerDialogBtn(props: StickerDialogBtnProps) {
 
   return (
     <StickerButton
-      style={{
-        cursor: 'pointer',
-        minWidth: '200px',
-        borderRadius: '3px',
-        border: '1px solid rgba(0 0 0 / 0.23)',
-      }}
       onClick={handleOnClick}
+      disabled={props.disabled ? true : false}
     >
       <StickerDialog
         open={opened}
