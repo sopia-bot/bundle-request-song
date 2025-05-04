@@ -29,6 +29,9 @@ export type Song = {
   artist: string;
   title: string;
   requester: string;
+  thumbnail: string;
+  playTime: number;
+  isPlayed: boolean;
 };
 
 export type CurrentSong = Song | null;

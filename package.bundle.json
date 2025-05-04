@@ -5,13 +5,12 @@
   "description:ko": "매니저 없이 신청곡을 고급스럽게 관리할 수 있는 프로그램",
   "version": "0.0.1",
   "main": "./apps/worker/index.js",
-  "page": "http://localhost:4200",
-  "pageType": "http",
+  "page": "index.html",
   "pageRoot": "apps/views",
   "page-version": 2,
-  "debug": true,
+  "debug": false,
   "stp": {
-    "domain": "starter.sopia.dev",
+    "domain": "request-song.sopia.dev",
     "file": "./apps/background/index.js"
   },
   "release-note": {},
@@ -19,8 +18,9 @@
     "ignore:upload": ["node_modules", "migrated"]
   },
   "dependencies": {
-    "@prisma/client": "^6.0.1",
-    "prisma": "^5.22.0",
+    "@prisma/client": "^6.7.0",
+    "node-youtube-music": "^0.10.3",
+    "prisma": "^6.7.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
   }

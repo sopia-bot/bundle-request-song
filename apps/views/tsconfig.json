@@ -16,7 +16,6 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "typeRoots": ["./node_modules/@heroicons/react"],
 
     /* Linting */
     "strict": true,
@@ -24,6 +23,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "./node_modules/@heroicons/react"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

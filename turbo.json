@@ -7,6 +7,10 @@
       "outputs": ["dist/apps/**"],
       "cache": false
     },
+    "db:generate": {
+      "outputs": ["apps/background/src/prisma/**"],
+      "cache": false
+    },
     "test": {
       "outputs": ["dist/**"]
     },
@@ -19,4 +23,4 @@
       "cache": false
     }
   }
-} 
+}

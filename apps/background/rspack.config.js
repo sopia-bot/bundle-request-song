@@ -1,5 +1,7 @@
 const { resolve } = require('path');
 
+const includeNodeModules = [];
+
 module.exports = {
   target: 'node',
   entry: {
@@ -13,6 +15,7 @@ module.exports = {
       export: 'default',
     },
   },
+  ignoreWarnings: [/the request of a dependency is an expression/],
   module: {
     rules: [
       {
@@ -33,7 +36,7 @@ module.exports = {
               decoratorMetadata: true,
             },
             keepClassNames: true,
-            externalHelpers: true,
+            externalHelpers: false,
             minify: {
               compress: false,
               mangle: false,
@@ -59,8 +62,11 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
   },
   externals: [
-    // 모든 node_modules를 외부화
+    // node-youtube-music를 제외한 모든 node_modules를 외부화
     ({ request }, callback) => {
+      if (includeNodeModules.includes(request)) {
+        return callback();
+      }
       if (/^[a-zA-Z0-9@][^:]*$/.test(request)) {
         // request가 상대 경로 또는 절대 경로가 아닌 경우(node_modules 모듈)
         return callback(null, `commonjs ${request}`);
@@ -69,5 +75,4 @@ module.exports = {
     },
   ],
   mode: 'production', // 'production', 또는 'development'
-  target: 'node',
 };

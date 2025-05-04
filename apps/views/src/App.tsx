@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Tabs, Tab } from '@heroui/react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DonationSettings } from './components/DonationSettings';
 import { SongList } from './components/SongList';
 import { CurrentSong } from './components/CurrentSong';
+import { Sticker } from '@sopia-bot/core';
 import {
   DonationSettings as DonationSettingsType,
   Song,
   CurrentSong as CurrentSongType,
 } from './types';
+import { useSongsStore } from './store/songs';
 
 // 더미 데이터 (실제로는 react-query로 대체될 예정)
 const initialSettings: DonationSettingsType = {
@@ -15,83 +18,75 @@ const initialSettings: DonationSettingsType = {
   paidEnabled: false,
 };
 
-const initialSongs: Song[] = [
-  {
-    id: '1',
-    addedAt: '2024-04-29 14:00:00',
-    artist: '아이유',
-    title: 'Love wins all',
-    requester: '신청자1',
-  },
-  {
-    id: '2',
-    addedAt: '2024-04-29 14:01:00',
-    artist: 'NewJeans',
-    title: 'Super Shy',
-    requester: '신청자2',
-  },
-  {
-    id: '3',
-    addedAt: '2024-04-29 14:02:00',
-    artist: 'LE SSERAFIM',
-    title: 'Perfect Night',
-    requester: '신청자3',
-  },
-  {
-    id: '4',
-    addedAt: '2024-04-29 14:03:00',
-    artist: 'IVE',
-    title: 'Baddie',
-    requester: '신청자4',
-  },
-  {
-    id: '5',
-    addedAt: '2024-04-29 14:04:00',
-    artist: 'aespa',
-    title: 'Drama',
-    requester: '신청자5',
-  },
-  {
-    id: '6',
-    addedAt: '2024-04-29 14:05:00',
-    artist: 'BLACKPINK',
-    title: 'How You Like That',
-    requester: '신청자6',
-  },
-  {
-    id: '7',
-    addedAt: '2024-04-29 14:06:00',
-    artist: 'BTS',
-    title: 'Dynamite',
-    requester: '신청자7',
-  },
-  {
-    id: '8',
-    addedAt: '2024-04-29 14:07:00',
-    artist: 'TWICE',
-    title: 'I GOT YOU',
-    requester: '신청자8',
-  },
-  {
-    id: '9',
-    addedAt: '2024-04-29 14:08:00',
-    artist: 'Red Velvet',
-    title: 'Chill Kill',
-    requester: '신청자9',
-  },
-  {
-    id: '10',
-    addedAt: '2024-04-29 14:09:00',
-    artist: 'NCT DREAM',
-    title: 'Candy',
-    requester: '신청자10',
-  },
-];
+const fetchSettings = async (): Promise<DonationSettingsType> => {
+  const response = await fetch('stp://request-song.sopia.dev/settings');
+  if (!response.ok) {
+    throw new Error('설정을 불러오는데 실패했습니다.');
+  }
+  const data = await response.json();
+  return {
+    freeEnabled: data.allowFree,
+    limitCountEnabled: data.limitByCount,
+    limitCount: data.maxRequestCount ?? 0,
+    limitTimeEnabled: data.limitByTime,
+    limitTime: data.requestTimeLimit ?? 0,
+    paidEnabled: data.allowPaid,
+    donationType:
+      data.paidType === 'sticker' ? 'SPECIFIC_STICKER' : 'MINIMUM_STICKER',
+    sticker: data.stickerId ? ({ name: data.stickerId } as Sticker) : undefined,
+    minimumAmount: data.minAmount ?? 0,
+    distributionEnabled: data.allowDistribution ?? false,
+  };
+};
+
+const updateSettings = async (
+  settings: DonationSettingsType,
+): Promise<void> => {
+  const response = await fetch('stp://request-song.sopia.dev/settings', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      allowFree: settings.freeEnabled,
+      limitByCount: settings.limitCountEnabled,
+      maxRequestCount: settings.limitCount,
+      limitByTime: settings.limitTimeEnabled,
+      requestTimeLimit: settings.limitTime,
+      allowPaid: settings.paidEnabled,
+      paidType:
+        settings.donationType === 'SPECIFIC_STICKER' ? 'sticker' : 'amount',
+      stickerId: settings.sticker?.name,
+      minAmount: settings.minimumAmount,
+      allowDistribution: settings.distributionEnabled,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('설정을 저장하는데 실패했습니다.');
+  }
+};
 
 export const App = () => {
-  const [settings, setSettings] =
-    useState<DonationSettingsType>(initialSettings);
-  const [songs, setSongs] = useState<Song[]>(initialSongs);
+  const queryClient = useQueryClient();
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['settings'],
+    queryFn: fetchSettings,
+  });
+
+  const { mutate: updateSettingsMutation } = useMutation({
+    mutationFn: updateSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+    onError: (error) => {
+      console.error('설정 저장 실패:', error);
+    },
+  });
+
+  const songs = useSongsStore((state) => state.songs);
+  const removeSong = useSongsStore((state) => state.removeSong);
+  const updateSong = useSongsStore((state) => state.updateSong);
   const [currentSong, setCurrentSong] = useState<CurrentSongType>(null);
   const [history, setHistory] = useState<Song[]>([]);
   const [isShuffleActive, setIsShuffleActive] = useState(false);
@@ -108,8 +103,7 @@ export const App = () => {
   }, []);
 
   const handleSettingsChange = (newSettings: DonationSettingsType) => {
-    setSettings(newSettings);
-    // TODO: 서버에 저장하는 로직 추가
+    updateSettingsMutation(newSettings);
   };
 
   const handlePlay = (song: Song) => {
@@ -117,11 +111,13 @@ export const App = () => {
     }
     setHistory([...history, song]);
     setCurrentSong(song);
+    updateSong(song.id, {
+      isPlayed: true,
+    });
   };
 
   const handleDelete = (songId: string) => {
-    setSongs(songs.filter((song) => song.id !== songId));
-    // TODO: 서버에 삭제 요청 추가
+    removeSong(songId);
   };
 
   const handleNext = () => {
@@ -134,6 +130,9 @@ export const App = () => {
         const randomIndex = Math.floor(Math.random() * availableSongs.length);
         setCurrentSong(availableSongs[randomIndex]);
         setHistory([...history, availableSongs[randomIndex]]);
+        updateSong(availableSongs[randomIndex].id, {
+          isPlayed: true,
+        });
       } else {
         setCurrentSong(null);
       }
@@ -146,6 +145,9 @@ export const App = () => {
       if (nextSong) {
         setCurrentSong(nextSong);
         setHistory([...history, nextSong]);
+        updateSong(nextSong.id, {
+          isPlayed: true,
+        });
       } else {
         setCurrentSong(null);
       }
@@ -172,12 +174,16 @@ export const App = () => {
   };
 
   const renderContent = () => {
+    if (isLoading) {
+      return <div>로딩 중...</div>;
+    }
+
     if (isWideScreen) {
       return (
         <div className="flex gap-4 w-full">
           <div className="w-1/2">
             <DonationSettings
-              settings={settings}
+              settings={settings ?? initialSettings}
               onSettingsChange={handleSettingsChange}
             />
           </div>
@@ -211,7 +217,7 @@ export const App = () => {
         >
           <Tab key="settings" title="설정">
             <DonationSettings
-              settings={settings}
+              settings={settings ?? initialSettings}
               onSettingsChange={handleSettingsChange}
             />
           </Tab>
@@ -240,7 +246,7 @@ export const App = () => {
   };
 
   return (
-    <div className="mx-auto flex items-center justify-center h-screen w-full max-w-[1600px]">
+    <div className="mx-auto flex items-center justify-center h-screen w-full max-w-[1600px] overflow-y-auto">
       {renderContent()}
     </div>
   );

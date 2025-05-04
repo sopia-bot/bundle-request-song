@@ -13,6 +13,8 @@ import {
   TrashIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
+import { DeleteAllSongsButton } from './DeleteAllSongsButton';
+import { useSongsSync } from '../hooks/useSongsSync';
 
 interface SongListProps {
   songs: Song[];
@@ -29,6 +31,8 @@ export const SongList = ({
   currentSongId,
   history,
 }: SongListProps) => {
+  useSongsSync();
+
   const columns = [
     { name: '재생', uid: 'played' },
     { name: '추가된 시각', uid: 'addedAt' },
@@ -72,7 +76,10 @@ export const SongList = ({
 
   return (
     <div className="mt-4">
-      <h2 className="text-xl font-bold mb-4">신청곡 관리 목록</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">신청곡 관리 목록</h2>
+        <DeleteAllSongsButton />
+      </div>
       <Table aria-label="신청곡 목록" isHeaderSticky className="max-h-[450px]">
         <TableHeader columns={columns}>
           {(column) => (
@@ -82,20 +89,28 @@ export const SongList = ({
           )}
         </TableHeader>
         <TableBody items={songs}>
-          {songs.map((song) => (
-            <TableRow
-              key={song.id}
-              className={`group ${currentSongId === song.id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
-            >
-              {(columnKey) => (
-                <TableCell
-                  className={`${currentSongId === song.id ? 'text-blue-600 font-medium' : ''}`}
-                >
-                  {renderCell(song, columnKey)}
-                </TableCell>
-              )}
+          {songs.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="text-center py-4">
+                신청된 곡이 없습니다.
+              </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            songs.map((song) => (
+              <TableRow
+                key={song.id}
+                className={`group ${currentSongId === song.id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+              >
+                {(columnKey) => (
+                  <TableCell
+                    className={`${currentSongId === song.id ? 'text-blue-600 font-medium' : ''}`}
+                  >
+                    {renderCell(song, columnKey)}
+                  </TableCell>
+                )}
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>

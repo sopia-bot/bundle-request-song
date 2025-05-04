@@ -6,7 +6,7 @@
   "scripts": {
     "serve": "turbo run serve",
     "build": "turbo run build",
-    "db:generate": "prisma generate",
+    "db:generate": "turbo run db:generate --filter=background",
     "clean": "turbo run clean",
     "watch": "turbo run watch",
     "dev": "turbo run dev",
