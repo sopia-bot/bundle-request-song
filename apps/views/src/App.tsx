@@ -246,7 +246,7 @@ export const App = () => {
   };
 
   return (
-    <div className="mx-auto flex items-center justify-center h-screen w-full max-w-[1600px] overflow-y-auto">
+    <div className="mx-auto flex items-center justify-center h-screen w-screen overflow-y-auto p-10">
       {renderContent()}
     </div>
   );
