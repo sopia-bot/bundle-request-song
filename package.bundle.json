@@ -3,7 +3,7 @@
   "name:ko": "소피아 신청곡 관리",
   "description": "A program that allows you to manage request songs without a manager",
   "description:ko": "매니저 없이 신청곡을 고급스럽게 관리할 수 있는 프로그램",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "./apps/worker/index.js",
   "page": "index.html",
   "pageRoot": "apps/views",
