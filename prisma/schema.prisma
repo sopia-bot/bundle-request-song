@@ -30,6 +30,7 @@ model Setting {
 model Song {
   id           Int      @id
   addedAt      DateTime @default(now())
+  playedAt     DateTime?
   artist       String
   title        String
   thumbnail    String
@@ -62,4 +63,16 @@ model RequestHistoryBackup {
   thumbnail String
   playTime  Int
   createdAt DateTime @default(now())
+}
+
+model Ticket {
+  id        Int      @id @default(autoincrement())
+  liveId    Int
+  authorId  Int
+  nickname  String
+  sticker   String
+  amount    Int
+  combo     Int
+  createdAt DateTime @default(now())
+  isUsed    Boolean  @default(false)
 }

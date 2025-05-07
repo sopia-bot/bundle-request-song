@@ -31,6 +31,9 @@ declare global {
 
 async function getAllListeners(liveId: number): Promise<User[]> {
   let members: User[] = [];
+  const liveInfo = await window.$sopia.api.lives.info(liveId);
+  const authorInfo = liveInfo.res.results[0].author as User;
+  members.push(authorInfo);
   let req = await window.$sopia.api.lives.listeners(liveId);
   let res = req.res;
   members = members.concat(req.res.results);
@@ -59,17 +62,22 @@ async function backgroundListener(event: any, msg: string, data: any) {
   if (msg === 'reload') {
     reload();
   } else if (msg === 'insert-paid') {
-    const list = paidMap.get(data.user.id) || [];
-    list.push({
-      liveId: 0,
-      authorId: data.user.id,
-      nickname: data.user.nickname,
-      sticker: '__sopia_insert_paid',
-      amount: 0,
-      combo: 0,
+    const res = await fetch(`stp://request-song.sopia.dev/users/ticket`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        liveId: 0,
+        authorId: data.user.id,
+        nickname: data.user.nickname,
+        sticker: '__sopia_insert_paid',
+        amount: 0,
+        combo: 0,
+      }),
     });
-    paidMap.set(data.user.id, list);
-    if (data.sendMsgFlag) {
+    const result = await res.json();
+    if (result.success && data.sendMsgFlag) {
       window.$sopia.liveMap
         .values()
         .next()
@@ -152,19 +160,29 @@ async function liveMesasge(evt: LiveMessageSocket, socket: LiveSocket) {
     if (data.success) {
       socket.message(`${evt.data.user.nickname}님의 ${data.message}`);
       if (data.isPaid) {
-        const list = paidMap.get(evt.data.user.id) || [];
-        list.push({
-          liveId: evt.data.live.id,
-          authorId: evt.data.user.id,
-          nickname: evt.data.user.nickname,
-          sticker: '__sopia_insert_paid',
-          amount: 0,
-          combo: 0,
-        });
-        paidMap.set(evt.data.user.id, list);
-        socket.message(
-          `${evt.data.user.nickname}님의 유료 신청권을 돌려드렸습니다.`
+        const ticketRes = await fetch(
+          `stp://request-song.sopia.dev/users/ticket`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              liveId: evt.live_id,
+              authorId: evt.data.user.id,
+              nickname: evt.data.user.nickname,
+              sticker: '__sopia_insert_paid',
+              amount: 0,
+              combo: 0,
+            }),
+          }
         );
+        const ticketData = await ticketRes.json();
+        if (ticketData.success) {
+          socket.message(
+            `${evt.data.user.nickname}님의 유료 신청권을 돌려드렸습니다.`
+          );
+        }
       }
     } else {
       socket.message(
@@ -215,15 +233,29 @@ async function liveMesasge(evt: LiveMessageSocket, socket: LiveSocket) {
     return;
   }
 
+  if (message.trim() === '현재곡') {
+    const res = await fetch(`stp://request-song.sopia.dev/songs/current`, {
+      method: 'GET',
+    }).then((res) => res.json());
+    const data = res.data;
+    socket.message(
+      `신청자: ${data.requester}\\n` +
+        `현재 재생중인 곡: ${data.title} - ${data.artist}`
+    );
+    return;
+  }
+
   if (message.startsWith('신청곡 ')) {
     const userNickname = evt.data.user.nickname;
 
-    const list = paidMap.get(evt.data.user.id) || [];
-    let isPaid = false;
-    if (list.length > 0) {
-      isPaid = true;
-      list.shift();
-    }
+    // 티켓 확인
+    const ticketRes = await fetch(
+      `stp://request-song.sopia.dev/users/ticket?authorId=${evt.data.user.id}`
+    );
+    const ticketData = await ticketRes.json();
+    const userTickets = ticketData.data;
+    let isPaid = userTickets.length > 0;
+    let ticketId = isPaid ? userTickets[0].id : null;
 
     if (!isPaid) {
       if (!setting.allowFree) {
@@ -273,6 +305,20 @@ async function liveMesasge(evt: LiveMessageSocket, socket: LiveSocket) {
           isPaid,
         }),
       }).then((res) => res.json());
+
+      // 티켓 사용 처리
+      if (isPaid && ticketId) {
+        await fetch(`stp://request-song.sopia.dev/users/ticket/${ticketId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            authorId: evt.data.user.id,
+          }),
+        });
+      }
+
       socket.message(
         `${userNickname}님이 신청하신 [${data.name} - ${data.artist}] 곡이 추가되었습니다.\\n\\n` +
           `취소하시려면 "신청곡 취소"를 입력해주세요.`
@@ -306,18 +352,22 @@ function livePresent(evt: LivePresentSocket, sock: LiveSocket) {
   }
 
   if (isPaid) {
-    const list = paidMap.get(user.id) || [];
     for (let i = 0; i < insertCount; i++) {
-      list.push({
-        liveId: evt.data.live.id,
-        authorId: user.id,
-        nickname: user.nickname,
-        sticker,
-        amount,
-        combo,
+      fetch(`stp://request-song.sopia.dev/users/ticket`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          liveId: evt.data.live.id,
+          authorId: user.id,
+          nickname: user.nickname,
+          sticker,
+          amount,
+          combo,
+        }),
       });
     }
-    paidMap.set(user.id, list);
     if (insertCount >= 1) {
       sock.message(
         `${user.nickname}님. 원하는 곡을 ${insertCount}개 신청할 수 있습니다.\\n"신청곡 [곡 제목 - 아티스트]"를 입력해 추가해 주세요.`

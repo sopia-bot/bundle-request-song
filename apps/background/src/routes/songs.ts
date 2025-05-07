@@ -73,6 +73,28 @@ router.post('/available', async (req, res) => {
   }
 });
 
+// 현재 재생중인 곡 조회
+router.get('/current', async (req, res) => {
+  try {
+    const prisma = usePrisma();
+    const currentSong = await prisma.song.findFirst({
+      where: {
+        isPlayed: true,
+      },
+      orderBy: {
+        playedAt: 'desc',
+      },
+    });
+    res.json({
+      success: true,
+      data: currentSong,
+    });
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, error: (error as Error).message });
+  }
+});
+
 // 모든 신청곡 조회
 router.get('/', async (req, res) => {
   try {
@@ -168,6 +190,7 @@ router.put('/:id', async (req, res) => {
         title,
         requester,
         isPlayed,
+        playedAt: isPlayed ? new Date() : null,
       },
     });
     res.json(song);
