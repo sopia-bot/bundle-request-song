@@ -8,6 +8,7 @@ import {
   ModalBody,
   ModalFooter,
   addToast,
+  Input,
 } from '@heroui/react';
 import { ArrowPathIcon } from '@heroicons/react/16/solid';
 
@@ -31,19 +32,25 @@ export default function LiveUserList({
 }: LiveUserListProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchUsers = async () => {
-    // 실제 API 호출 대신 더미 데이터 사용
-    const response = await fetch('stp://request-song.sopia.dev/users/list');
-    const data = await response.json();
-    if (data.success) {
-      console.log('data', data.data);
-      setUsers(data.data);
-    } else {
-      addToast({
-        description: data.message,
-        color: 'danger',
-      });
+    setIsRefreshing(true);
+    try {
+      const response = await fetch('stp://request-song.sopia.dev/users/list');
+      const data = await response.json();
+      if (data.success) {
+        console.log('data', data.data);
+        setUsers(data.data);
+      } else {
+        addToast({
+          description: data.message,
+          color: 'danger',
+        });
+      }
+    } finally {
+      setIsRefreshing(false);
     }
   };
   // 더미 데이터 로드
@@ -84,39 +91,58 @@ export default function LiveUserList({
   const isAllSelected =
     users.length > 0 && selectedUsers.length === users.length;
 
+  const filteredUsers = users.filter(
+    (user) =>
+      user.nickname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.tag.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} size="md" scrollBehavior="inside">
       <ModalContent>
-        {/* 헤더 */}
-        <ModalHeader className="flex items-center justify-between">
-          <div className="flex items-center">
-            <h2 className="text-lg font-medium">현재 참여자 목록</h2>
-            <div className="flex items-center gap-2 ms-2">
-              <Button
-                isIconOnly
+        <ModalHeader className="flex flex-col">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <h2 className="text-lg font-medium">
+                현재 참여자 목록 {users.length}명
+              </h2>
+              <div className="flex items-center gap-2 ms-2">
+                <Button
+                  isIconOnly
+                  size="sm"
+                  onPress={handleRefresh}
+                  variant="light"
+                  isDisabled={isRefreshing}
+                >
+                  <ArrowPathIcon
+                    className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`}
+                  />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 mr-5">
+              <Checkbox
+                isSelected={isAllSelected}
+                onChange={(e) => handleSelectAll(e.target.checked)}
                 size="sm"
-                onPress={handleRefresh}
-                variant="light"
               >
-                <ArrowPathIcon className="h-5 w-5" />
-              </Button>
+                전체 선택
+              </Checkbox>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 mr-5">
-            <Checkbox
-              isSelected={isAllSelected}
-              onChange={(e) => handleSelectAll(e.target.checked)}
-              size="sm"
-            >
-              전체 선택
-            </Checkbox>
+          <div className="flex items-center justify-between mt-3">
+            <Input
+              placeholder="닉네임 또는 태그로 검색"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full"
+            />
           </div>
         </ModalHeader>
 
-        {/* 바디 */}
         <ModalBody>
-          {users.map((user) => (
+          {filteredUsers.map((user) => (
             <div
               key={user.id}
               onClick={() => handleUserSelect(user)}
@@ -143,7 +169,6 @@ export default function LiveUserList({
           ))}
         </ModalBody>
 
-        {/* 푸터 */}
         <ModalFooter>
           <Button variant="ghost" onPress={onClose}>
             취소
